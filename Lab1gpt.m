@@ -5,6 +5,7 @@ clc; clear all; close all;
 %% 1. Wyznaczenie parametrów modelu
 
 % Wartości nominalne
+TzewNom = -20;
 TzewN = -20;  % Temperatura zewnętrzna [°C]
 Tl_nominal = 20; % Nominalna temperatura w lewym pokoju [°C]
 Tp_nominal = 15; % Nominalna temperatura w prawym pokoju [°C]
@@ -25,15 +26,15 @@ Cp = 1000; % Ciepło własciwe powietrza [J/(kg*K)]
 rop = 1.2; % Gęstość powietrza [kg/m^3]
 
 % Pojemności cieplne
-Cvp = Cp * rop * Vp; % Pojemność cieplna prawego pokoju [J/°C]
-Cvl = Cp * rop * Vl; % Pojemność cieplna lewego pokoju [J/°C]
+Cvp = Cp * rop * Vp % Pojemność cieplna prawego pokoju [J/°C]
+Cvl = Cp * rop * Vl % Pojemność cieplna lewego pokoju [J/°C]
 
 %% 2. Obliczenie punktu pracy (punkt równowagi)
 
 % Przewodności cieplne między pomieszczeniami
-Ksp = Pgn / (a * (Tl_nominal - TzewN) + (Tp_nominal - TzewN));
-Ksl = a * Ksp;
-Ksw = Ksp * (Tp_nominal - TzewN) / (Tl_nominal - Tp_nominal); % Przewodność cieplna między pokojami
+Ksp = Pgn / (a * (Tl_nominal - TzewN) + (Tp_nominal - TzewN))
+Ksl = a * Ksp
+Ksw = Ksp * (Tp_nominal - TzewN) / (Tl_nominal - Tp_nominal) % Przewodność cieplna między pokojami
 
 
 
@@ -98,10 +99,11 @@ disp('Macierz D:');
 disp(D);
 
 % Macierze do iteracji (pierwszy etap)
-tab_Tzew = [TzewN, TzewN + 10, TzewN - 10];
-tab_Tzew1 = [0, -10, 0];% Zmiana temperatury zewnętrznej
-tab_Pg = [1, 1, 0.8];             % Zmniejszenie mocy grzałki
-tab_color = {'r', 'g', 'b', 'c', 'm', 'k', [0.8500 0.3250 0.0980], [0.9290 0.6940 0.1250], [0.6350 0.0780 0.1840]};                % Kolory do wykresów
+tab_Tzew = [TzewN, TzewN - 10, TzewN];
+tab_Pg = [Pgn, Pgn, Pgn*0.8];  
+tab_Tzew1 = [0,-10,0];% Zmiana temperatury zewnętrznej
+tab_Pg1 = [1, 1, 0.8];             % Zmniejszenie mocy grzałki
+tab_color = {'r', 'g', 'b', 'c', 'm', 'k', [0.8500 0.3250 0.0980],[0.9290 0.6940 0.1250],[0.6350 0.0780 0.1840]};                % Kolory do wykresów
 
 % Wykresy dla pierwszego etapu
 figure(1); hold on; grid on; title('Temperatura w lewym pokoju (Tl) - 1 etap');
@@ -120,11 +122,13 @@ l=1;
 %% Iteracja przez przypadki
 for i = 1:3
     Tzew0 = tab_Tzew(i); 
+    Pg0 = tab_Pg(i); 
     %Pg0 = Pgn;
     Tl_eq = Tl_nominal;
     Tp_eq = Tp_nominal;
     dPg = 1;
     dTzew = 0;
+    
     out1 = sim("untitled.slx", 'StopTime', '5000'); 
     figure(1);
     plot(out1.tout, out1.Tl_eq, 'Color', tab_color{i}, 'DisplayName', ...
@@ -134,7 +138,7 @@ for i = 1:3
         ['Tzew=', num2str(Tzew0), ', Pg=', num2str(Pg0)]);
 
     for j = 1:3
-    dPg = tab_Pg(j);
+    dPg = tab_Pg1(j);
     dTzew = tab_Tzew1(j); 
     Tl_eq = out1.Tl_eq(end);
     Tp_eq = out1.Tp_eq(end);
